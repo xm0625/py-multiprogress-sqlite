@@ -113,9 +113,9 @@ SqliteManager.register('get_callback_pipe', callable=get_callback_pipe)
 SqliteManager.register('close_callback_pipe', callable=close_callback_pipe)
 
 
-def run():
+def run(ip, port, auth_key):
     q = Queue.Queue(maxsize=-1)
-    manage_server_thread = threading.Thread(target=start_manage_server, args=("127.0.0.1", 50001, "123456",))
+    manage_server_thread = threading.Thread(target=start_manage_server, args=(ip, port, auth_key,))
     manage_server_thread.setDaemon(True)
     manage_server_thread.start()
     print("manage_server_thread started.")
@@ -127,4 +127,4 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    run("127.0.0.1", 50001, "123456")
