@@ -38,23 +38,23 @@ def worker(queue):
     connection = sqlite3.connect("db.sqlite")
     cursor = connection.cursor()
     cursor.executescript("""
-        drop table person;
-        drop table book;
+        DROP TABLE person;
+        DROP TABLE book;
 
-        create table person(
+        CREATE TABLE person(
             firstname,
             lastname,
             age
         );
 
-        create table book(
+        CREATE TABLE book(
             title,
             author,
             published
         );
 
-        insert into book(title, author, published)
-        values (
+        INSERT INTO book(title, author, published)
+        VALUES (
             'Dirk Gently''s Holistic Detective Agency',
             'Douglas Adams',
             1987
@@ -92,7 +92,7 @@ def worker(queue):
                 connection.rollback()
                 result = "error"
             send_conn = pipe_notify_map[transaction_id]["send_conn"]
-            send_conn.send({"code":  "-1" if (result == "error") else "0", "result": result})
+            send_conn.send({"code": "-1" if (result == "error") else "0", "result": result})
 
 
 def close_callback_pipe(transaction_id):
@@ -108,11 +108,13 @@ class SqliteManager(BaseManager):
     pass
 
 
-if __name__ == "__main__":
+SqliteManager.register('get_queue', callable=lambda: q)
+SqliteManager.register('get_callback_pipe', callable=get_callback_pipe)
+SqliteManager.register('close_callback_pipe', callable=close_callback_pipe)
+
+
+def run():
     q = Queue.Queue(maxsize=-1)
-    SqliteManager.register('get_queue', callable=lambda: q)
-    SqliteManager.register('get_callback_pipe', callable=get_callback_pipe)
-    SqliteManager.register('close_callback_pipe', callable=close_callback_pipe)
     manage_server_thread = threading.Thread(target=start_manage_server, args=("127.0.0.1", 50001, "123456",))
     manage_server_thread.setDaemon(True)
     manage_server_thread.start()
@@ -120,10 +122,9 @@ if __name__ == "__main__":
 
     # TODO 新增一个进程,定时扫描pipe_notify_map,将其中超过预定超时时间的pipe强制close掉,避免持有过多的pipe
 
-    worker_thread = threading.Thread(target=worker, args=(q,))
-    worker_thread.setDaemon(True)
-    worker_thread.start()
     print("worker_thread started.")
-    worker_thread.join()
-    print("worker_thread joined.")
-    # manage_server_thread.join()
+    worker(q)
+
+
+if __name__ == "__main__":
+    run()
