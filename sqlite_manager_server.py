@@ -38,8 +38,8 @@ def worker(queue):
     connection = sqlite3.connect("db.sqlite")
     cursor = connection.cursor()
     cursor.executescript("""
-        DROP TABLE person;
-        DROP TABLE book;
+        DROP TABLE IF EXISTS person;
+        DROP TABLE IF EXISTS book;
 
         CREATE TABLE person(
             firstname,
