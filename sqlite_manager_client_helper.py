@@ -53,7 +53,7 @@ def execute_batch(sqlite_manager, execute_list, result_method, timeout=30):
         if "code" not in result:
             raise Exception("服务异常")
         if result["code"] != "0":
-            raise Exception("数据库执行失败")
+            raise Exception("数据库执行失败 error="+str(result["result"]))
         return result["result"]
     except socket.error as _:
         raise Exception("与服务失去连接")
