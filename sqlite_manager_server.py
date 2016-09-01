@@ -36,6 +36,7 @@ def start_manage_server(address, port, authkey):
 
 def worker(queue):
     connection = sqlite3.connect("db.sqlite")
+    connection.text_factory = str
     cursor = connection.cursor()
     cursor.executescript("""
         DROP TABLE IF EXISTS person;
@@ -88,11 +89,12 @@ def worker(queue):
                     result = cursor.fetchall()
                 if execute_result_method == "rowcount":
                     result = cursor.rowcount
-            except Exception as _:
+            except Exception as e:
                 connection.rollback()
-                result = "error"
+                result = "error," + str(e.message)
             send_conn = pipe_notify_map[transaction_id]["send_conn"]
-            send_conn.send({"code": "-1" if (result == "error") else "0", "result": result})
+            send_conn.send({"code": "-1" if (isinstance(result, basestring) and result.startswith("error")) else "0",
+                            "result": result})
 
 
 def close_callback_pipe(transaction_id):
@@ -108,13 +110,11 @@ class SqliteManager(BaseManager):
     pass
 
 
-SqliteManager.register('get_queue', callable=lambda: q)
-SqliteManager.register('get_callback_pipe', callable=get_callback_pipe)
-SqliteManager.register('close_callback_pipe', callable=close_callback_pipe)
-
-
 def run(ip, port, auth_key):
     q = Queue.Queue(maxsize=-1)
+    SqliteManager.register('get_queue', callable=lambda: q)
+    SqliteManager.register('get_callback_pipe', callable=get_callback_pipe)
+    SqliteManager.register('close_callback_pipe', callable=close_callback_pipe)
     manage_server_thread = threading.Thread(target=start_manage_server, args=(ip, port, auth_key,))
     manage_server_thread.setDaemon(True)
     manage_server_thread.start()
