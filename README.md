@@ -1,6 +1,6 @@
 py-multiprogress-sqlite
 ===
-  该项目已弃用,请参考[py-http-sqlite][0]以获得更优的解决方案
+  该项目已弃用,请参考[py-http-sqlite][0]以获得更优的解决方案  
   python下的多进程(分布式进程)同时读写sqlite的demo  
   
 原理简介
